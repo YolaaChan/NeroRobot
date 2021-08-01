@@ -1,4 +1,4 @@
 @echo off
-TITLE Dola Robot
+TITLE Layla Robot
 :: Enables virtual env mode and then starts Rika
-env\scripts\activate.bat && py -m DolaRobot
+env\scripts\activate.bat && py -m LaylaRobot
