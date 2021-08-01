@@ -3,6 +3,12 @@ import re
 import os
 import requests
 
+from datetime import datetime
+
+from pyrogram import filters
+from pyrogram.errors import PeerIdInvalid
+from pyrogram.types import Message, User
+
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.types import ChannelParticipantsAdmins
 from telethon import events
@@ -33,7 +39,7 @@ from LaylaRobot.modules.sql.users_sql import get_user_num_chats
 from LaylaRobot.modules.helper_funcs.chat_status import sudo_plus
 from LaylaRobot.modules.helper_funcs.extraction import extract_user
 from LaylaRobot import telethn as YoneTelethonClient, TIGERS, DRAGONS, DEMONS
-
+from LaylaRobot import pbot
 
 def no_by_per(totalhp, percentage):
     """
@@ -287,7 +293,7 @@ def info(update: Update, context: CallbackContext):
     disaster_level_present = False
 
     if user.id == OWNER_ID:
-        text += "\n\nThe Disaster level of this person is 'God'."
+        text += "\n\nThe Disaster level of this person is 'Master'."
         disaster_level_present = True
     elif user.id in DEV_USERS:
         text += "\n\nThis user is member of 'Hero Association'."
@@ -306,7 +312,7 @@ def info(update: Update, context: CallbackContext):
         disaster_level_present = True
 
     if disaster_level_present:
-        text += ' [<a href="https://t.me/OnePunchUpdates/155">?</a>]'.format(
+        text += ' [<a href="https://t.me/OdaSupport">Levelling</a>]'.format(
             bot.username
         )
 
@@ -337,8 +343,8 @@ def info(update: Update, context: CallbackContext):
             _file = bot.get_file(profile["file_id"])
             _file.download(f"{user.id}.png")
 
-            message.reply_document(
-                document=open(f"{user.id}.png", "rb"),
+            message.reply_photo(
+                photo=open(f"{user.id}.png", "rb"),
                 caption=(text),
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True,
@@ -515,34 +521,110 @@ def __user_info__(user_id):
     result = result.strip("\n")
     return result
 
+#whois
+def ReplyCheck(message: Message):
+    reply_id = None
+
+    if message.reply_to_message:
+        reply_id = message.reply_to_message.message_id
+
+    elif not message.from_user.is_self:
+        reply_id = message.message_id
+
+    return reply_id
+
+
+infotext = (
+    "**[{full_name}](tg://user?id={user_id})**\n"
+    " * UserID: `{user_id}`\n"
+    " * First Name: `{first_name}`\n"
+    " * Last Name: `{last_name}`\n"
+    " * Username: `{username}`\n"
+    " * Last Online: `{last_online}`\n"
+    " * Bio: {bio}"
+)
+
+
+def LastOnline(user: User):
+    if user.is_bot:
+        return ""
+    elif user.status == "recently":
+        return "Recently"
+    elif user.status == "within_week":
+        return "Within the last week"
+    elif user.status == "within_month":
+        return "Within the last month"
+    elif user.status == "long_time_ago":
+        return "A long time ago :("
+    elif user.status == "online":
+        return "Currently Online"
+    elif user.status == "offline":
+        return datetime.fromtimestamp(user.status.date).strftime(
+            "%a, %d %b %Y, %H:%M:%S"
+        )
+
+
+def FullName(user: User):
+    return user.first_name + " " + user.last_name if user.last_name else user.first_name
+
+@pbot.on_message(filters.command("whois") & ~filters.edited & ~filters.bot)
+async def whois(client, message):
+    cmd = message.command
+    if not message.reply_to_message and len(cmd) == 1:
+        get_user = message.from_user.id
+    elif len(cmd) == 1:
+        get_user = message.reply_to_message.from_user.id
+    elif len(cmd) > 1:
+        get_user = cmd[1]
+        try:
+            get_user = int(cmd[1])
+        except ValueError:
+            pass
+    try:
+        user = await client.get_users(get_user)
+    except PeerIdInvalid:
+        await message.reply("I don't know that User.")
+        return
+    desc = await client.get_chat(get_user)
+    desc = desc.description
+    await message.reply_text(
+        infotext.format(
+            full_name=FullName(user),
+            user_id=user.id,
+            user_dc=user.dc_id,
+            first_name=user.first_name,
+            last_name=user.last_name if user.last_name else "",
+            username=user.username if user.username else "",
+            last_online=LastOnline(user),
+            bio=desc if desc else "`No bio set up.`",
+        ),
+        disable_web_page_preview=True,
+    )
+
 
 __help__ = """
 *Away from group*
  ❍ /afk <reason>*:* mark yourself as AFK(away from keyboard).
  ❍ brb <reason>*:* same as the afk command - but not a command.
 When marked as AFK, any mentions will be replied to with a message to say you're not available!
-
 *ID:*
  ❍ /id*:* get the current group id. If used by replying to a message, gets that user's id.
  ❍ /gifid*:* reply to a gif to me to tell you its file ID.
-
 *Self addded information:* 
  ❍ /setme <text>*:* will set your info
  ❍ /me*:* will get your or another user's info.
 *Examples:* 💡
  ➩ /setme I am a wolf.
  ➩ /me @username(defaults to yours if no user specified)
-
 *Information others add on you:* 
  ❍ /bio*:* will get your or another user's bio. This cannot be set by yourself.
  ❍ /setbio <text>*:* while replying, will save another user's bio 
 *Examples:* 💡
  ➩ /bio @username(defaults to yours if not specified).`
  ➩ /setbio This user is a wolf` (reply to the user)
-
 *Overall Information about you:*
  ❍ /info*:* get information about a user. 
- 
+  ❍ /whois*:* get information about a user without pfp
 *What is that health thingy?*
  Come and see [HP System explained](https://t.me/OnePunchUpdates/192)
 """
@@ -554,7 +636,6 @@ STATS_HANDLER = CommandHandler("stats", stats)
 ID_HANDLER = DisableAbleCommandHandler("id", get_id)
 GIFID_HANDLER = DisableAbleCommandHandler("gifid", gifid)
 INFO_HANDLER = DisableAbleCommandHandler(("info", "book"), info)
-
 SET_ABOUT_HANDLER = DisableAbleCommandHandler("setme", set_about_me)
 GET_ABOUT_HANDLER = DisableAbleCommandHandler("me", about_me)
 
@@ -567,8 +648,9 @@ dispatcher.add_handler(GET_BIO_HANDLER)
 dispatcher.add_handler(SET_ABOUT_HANDLER)
 dispatcher.add_handler(GET_ABOUT_HANDLER)
 
+
 __mod_name__ = "Infos"
-__command_list__ = ["setbio", "bio", "setme", "me", "info"]
+__command_list__ = ["setbio", "bio", "setme", "me", "info", "whois"]
 __handlers__ = [
     ID_HANDLER,
     GIFID_HANDLER,
