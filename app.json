@@ -169,6 +169,11 @@
          "description": "Dont load these modules cause they shit, space separation",
          "required": false,
          "value": "rss"
+      },
+      "REDIS_URI": {
+         "description": "Redis endpoint URL, from redislabs.com",
+         "required": true
+         "value": ""   
       }, 
       "BL_CHATS": {
          "description": "List of chats you want blacklisted.",
