@@ -188,7 +188,7 @@ For starters click on this button
 </details>  
 
 ## Credits
-The bot is based on the original work done by [PaulSonOfLars](https://github.com/PaulSonOfLars)
+The bot is based on the original work done by [ARYA ZAKARIA](https://github.com/aryazakaria01)
 
 
-## [OWNER ARYA ZAKARIA](http://t.me/Badboyanim)
+## [OWNER YOLAA CHAN](http://t.me/YoLaa_Chan)
