@@ -189,7 +189,7 @@ For starters click on this button
 
 ## Credits
 The bot is based on the original work done by [PaulSonOfLars](https://github.com/PaulSonOfLars)
-
-
+The bot is based on the original work done by [UserLazy](https://github.com/Userlazy)
+The bot is based on the original work done by [QueenArzoo](https://github.com/QueenArzoo)
 
 ## [OWNER ARYA ZAKARIA](http://t.me/Badboyanim)
